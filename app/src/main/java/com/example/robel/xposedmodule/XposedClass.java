@@ -8,7 +8,8 @@ import static de.robv.android.xposed.XposedHelpers.findAndHookMethod;
 
 public class XposedClass implements IXposedHookLoadPackage {
 
-
+    //TODO
+    //Need to be able to find a method and hook to it with out a giving package path.
     @Override
     public void handleLoadPackage(final LoadPackageParam lpparam) throws Throwable {
         String classToHook = "com.example.robel.TestIdeaVim.MainActivity";
