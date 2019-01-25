@@ -33,6 +33,9 @@ public class XposedClass implements IXposedHookLoadPackage {
         XposedBridge.log("Loaded app: " + lpparam.packageName);
 
         switch (lpparam.packageName){
+            case "teamtreehouse.com.iamhere":
+                XposedBridge.log("Hooking on getApplicationContext");
+                break;
             case "android.content.ContextWrapper.getApplicationContext()":
                 XposedBridge.log("Hooking on getApplicationContext");
                 break;
@@ -94,16 +97,33 @@ public class XposedClass implements IXposedHookLoadPackage {
                     XposedBridge.log("%nInside android.net.NetworkInfo");
                 }
             });
-//            findAndHookMethod("com.android.systemui.statusbar.policy.Clock", lpparam.classLoader, "updateClock", new XC_MethodHook() {
-//                @Override
-//                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-//                    XposedBridge.log("%nInside com.android.systemui.statusbar.policy.Clock");
-//                    TextView tv = (TextView) param.thisObject;
-//                    String text = tv.getText().toString();
-//                    tv.setText(text + " :)");
-//                    tv.setTextColor(Color.RED);
-//                }
-//            });
+            findAndHookMethod("com.google.android.gms.location.LocationServices", lpparam.classLoader, "getLastLocation", new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    XposedBridge.log("/ncom.google.android.gms.location.getLastLocation");
+                }
+            });
+            findAndHookMethod("com.google.android.gms.location.LocationServices", lpparam.classLoader, "LocationServices", new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                            XposedBridge.log("/ncom.google.android.gms.location.LocationServices");
+                        }
+                    });
+//            com.google.android.gms.location.LocationServices.LocationServices()
+//            com.google.android.gms.location.LocationServices.FusedLocationProviderApi.getLastLocation
+//            com.google.android.gms.location.FusedLocationProviderApi.getLastLocation
+//            com.google.android.gms.location.FusedLocationProviderApi
+//            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+            findAndHookMethod("android.systemui.statusbar.policy.Clock", lpparam.classLoader, "getLastKnownLocation",String.class, new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    XposedBridge.log("%nInside com.android.systemui.statusbar.policy.Clock");
+                    TextView tv = (TextView) param.thisObject;
+                    String text = tv.getText().toString();
+                    tv.setText(text + " :)");
+                    tv.setTextColor(Color.RED);
+                }
+            });
         }
 //        if(lpparam.packageName.equals(classToHook2)){
 //            XposedBridge.log("Hooking on YouTube");
