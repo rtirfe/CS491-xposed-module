@@ -3,6 +3,7 @@ package com.example.robel.xposedmodule;
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
+import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam;
 import static de.robv.android.xposed.XposedHelpers.findAndHookMethod;
 
@@ -28,29 +29,46 @@ public class XposedClass implements IXposedHookLoadPackage {
         }
 
         if(lpparam.packageName.equals("teamtreehouse.com.iamhere")){
-            //TODO create a hooking for getLocation here
+            //TODO create a hooking for build
+            //com.google.android.gms.common.api.GoogleApiClient.Builder .build();
+            hookBuild(lpparam);
+            hookOnDummyApp(lpparam);// used for error handling, should expect and error,
         }
 
     }
 
     private void hookOnDummyApp(LoadPackageParam lpparam) {
-        findAndHookMethod(lpparam.packageName + ".MainActivity", lpparam.classLoader, "setOutput", int.class, new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                super.beforeHookedMethod(param);
-                param.args[0] = 1;
-                XposedBridge.log("value of i after hooking" +  param.args[0]);
-            }
-        });
+        try {
+            findAndHookMethod(lpparam.packageName + ".MainActivity", lpparam.classLoader, "setOutput", int.class, new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    super.beforeHookedMethod(param);
+                    param.args[0] = 1;
+                    XposedBridge.log("value of i after hooking" +  param.args[0]);
+                }
+            });
+        } catch (NoSuchMethodError e ) {
+            XposedBridge.log("METHOD NOT FOUND -> com.robel.testideavim.setOutput <- called by " +lpparam.packageName);
+        }
+        catch (XposedHelpers.ClassNotFoundError error){
+            XposedBridge.log("CLASS NOT FOUND -> " +lpparam.packageName +".MainActivity");
+        }
     }
 
     private void hookOnNetworkInfo(final LoadPackageParam lpparam){
-        findAndHookMethod("android.net.NetworkInfo", lpparam.classLoader, "getTypeName", new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                XposedBridge.log("\tInside android.net.NetworkInfo <- called by "+lpparam.packageName);
-            }
-        });
+        try {
+            findAndHookMethod("android.net.NetworkInfo", lpparam.classLoader, "getTypeName", new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    XposedBridge.log("\tInside android.net.NetworkInfo.getTypeName <- called by "+lpparam.packageName);
+                }
+            });
+        } catch (NoSuchMethodError e) {
+            XposedBridge.log("METHOD NOT FOUND -> android.net.NetworkInfo.getTypeName() <- called by " + lpparam.packageName);
+        }
+        catch (XposedHelpers.ClassNotFoundError error){
+            XposedBridge.log("CLASS NOT FOUND ->android.net.NetworkInfo");
+        }
     }
 
     private void hookGetActiveNetworkInfo(final LoadPackageParam lpparam) {
@@ -63,5 +81,20 @@ public class XposedClass implements IXposedHookLoadPackage {
         });
     }
 
+    private void hookBuild(final LoadPackageParam lpparam){
 
+        try {
+            findAndHookMethod("com.google.android.gms.common.api.GoogleApiClient.Builder", lpparam.classLoader, "build", new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    XposedBridge.log("\tInside com.google.android.gms.common.api.GoogleApiClient.Builder.build() <- called by " + lpparam.packageName);
+                }
+            });
+        } catch (NoSuchMethodError e) {
+            XposedBridge.log("METHOD NOT FOUND -> com.google.android.gms.common.api.GoogleApiClient.Builder.build() <- called by " + lpparam.packageName);
+        }
+        catch (XposedHelpers.ClassNotFoundError error){
+            XposedBridge.log("CLASS NOT FOUND ->com.google.android.gms.common.api.GoogleApiClient.Builder");
+        }
+    }
 }
