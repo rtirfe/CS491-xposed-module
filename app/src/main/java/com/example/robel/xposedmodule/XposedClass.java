@@ -1,12 +1,19 @@
 package com.example.robel.xposedmodule;
 
 
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
+
+import java.lang.reflect.Method;
+
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam;
 import static de.robv.android.xposed.XposedHelpers.findAndHookMethod;
+import static de.robv.android.xposed.XposedHelpers.findMethodBestMatch;
+import static de.robv.android.xposed.XposedHelpers.findMethodExact;
 
 //IXposedHookLoadPackage
 //Get notified when an app ("Android package") is loaded.
@@ -32,11 +39,8 @@ public class XposedClass implements IXposedHookLoadPackage {
             hookGetActiveNetworkInfo(lpparam); //android.net.ConnectivityManager.getActiveNetworkInfo()
             hookLocationServiceObject(lpparam);
             hookBuild(lpparam); //com.google.android.gms.common.api.GoogleApiClient.Builder.build();
-
-            //TODO implement getLastLocation() and requestLocationUpdates()
-            // hookRequestLocationUpdates(lpparam);//TODO try to find a method that hooks a methods with interface arguments. //can not hook interfaces; it found the found GoogleApiClient class though
-
-            // hookGetLastLocation(lpparam);
+            hookGetLastLocation(lpparam);//com.google.android.gms.internal.lu
+            hookRequestLocationUpdates(lpparam);//
         }
     }
 
@@ -133,7 +137,6 @@ public class XposedClass implements IXposedHookLoadPackage {
         }
     }
 
-    //TODO try to get the parameter and tell if it is called to use location api
     private void hookLocationServiceObject(final LoadPackageParam lpparam){
 
         //This will check to see if "teamtreehouse.com.iamhere" instantiated a LocationServices object, if not return is null.
@@ -141,31 +144,12 @@ public class XposedClass implements IXposedHookLoadPackage {
 
         if (myLocationServicesClass != null)
             XposedBridge.log("CLASS -> com.google.gms.location.LocationServices " + myLocationServicesClass.getName());
-
-        //No need for hooking on addApi() method anymore, replaced by the above code.
-//        try {
-//            findAndHookMethod("com.google.android.gms.common.api.GoogleApiClient.Builder"
-//                    , lpparam.classLoader,
-//                    "addApi",
-//                    "com.google.android.gms.common.api.Api",
-//                    new XC_MethodHook() {
-//                        @Override
-//                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-//                            XposedBridge.log("\tInside com.google.android.gms.common.api.GoogleApiClient.Builder.addApi() <- called by "
-//                                    + lpparam.packageName);
-//                        }
-//                    });
-//        } catch (NoSuchMethodError e) {
-//            XposedBridge.log("METHOD NOT FOUND -> com.google.android.gms.common.api.GoogleApiClient.Builder.addApi() <- called by " + lpparam.packageName);
-//        }
-//        catch (XposedHelpers.ClassNotFoundError error){
-//            XposedBridge.log("CLASS NOT FOUND ->com.google.android.gms.common.api.GoogleApiClient.Builder <- for addApi()");
-//        }
     }
 
     private void hookGetLastLocation(final LoadPackageParam lpparam) {
+        // public Location getLastLocation(GoogleApiClient client)
         try {
-            findAndHookMethod("com.google.android.gms.location.FusedLocationProviderApi",
+            findAndHookMethod("com.google.android.gms.internal.lu",
                     lpparam.classLoader,
                     "getLastLocation",
                     "com.google.android.gms.common.api.GoogleApiClient", new XC_MethodHook() {
@@ -183,5 +167,27 @@ public class XposedClass implements IXposedHookLoadPackage {
     }
 
     private void hookRequestLocationUpdates(final LoadPackageParam lpparam) {
+        //TODO more than one variables of requestLocationUpdates() method
+        try {
+            //public PendingResult<Status> requestLocationUpdates(GoogleApiClient client, final LocationRequest request, final LocationListener listener)
+            //public PendingResult<Status> requestLocationUpdates(GoogleApiClient client, final LocationRequest request, final LocationListener listener)
+            findAndHookMethod("com.google.android.gms.internal.lu",
+                    lpparam.classLoader,
+                    "requestLocationUpdates",
+                    "com.google.android.gms.common.api.GoogleApiClient",
+                    "com.google.android.gms.location.LocationRequest" ,
+                    "com.google.android.gms.location.LocationListener",
+                    new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                            XposedBridge.log("\tcom.google.android.gms.location.FusedLocationProviderApi.requestLocationUpdate() <- called by " + lpparam.packageName);
+                        }
+                    });
+        } catch (NoSuchMethodError e) {
+            XposedBridge.log("METHOD NOT FOUND -> com.google.android.gms.location.FusedLocationProviderApi.requestLocationUpdate() <- called by" + lpparam.packageName);
+        }
+        catch (XposedHelpers.ClassNotFoundError error){
+            XposedBridge.log("CLASS NOT FOUND -> com.google.android.gms.location.FusedLocationProviderApi.requestLocationUpdate()");
+        }
     }
 }
