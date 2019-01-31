@@ -1,10 +1,7 @@
 package com.example.robel.xposedmodule;
 
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationServices;
-
-import java.lang.reflect.Method;
+import java.net.URL;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
@@ -41,6 +38,7 @@ public class XposedClass implements IXposedHookLoadPackage {
             hookBuild(lpparam); //com.google.android.gms.common.api.GoogleApiClient.Builder.build();
             hookGetLastLocation(lpparam);//com.google.android.gms.internal.lu
             hookRequestLocationUpdates(lpparam);//
+            hookOpenConnection(lpparam);
         }
     }
 
@@ -67,6 +65,7 @@ public class XposedClass implements IXposedHookLoadPackage {
 
                             XposedBridge.log("lpparm.classLoader is: " + lpparam.classLoader.toString());
                             Class<?> myClass = XposedHelpers.findClass("com.example.robel.testideavim.MainActivity", lpparam.classLoader);
+
                             XposedBridge.log("myClass is:" + myClass.getName());
                             int i = (int) XposedHelpers.findField(myClass,"count").get(param.thisObject);
                             XposedBridge.log("count is: "+ i);
@@ -121,7 +120,6 @@ public class XposedClass implements IXposedHookLoadPackage {
     }
 
     private void hookBuild(final LoadPackageParam lpparam){
-        //TODO other API types different form LocationService.API can trigger this call
         try {
             findAndHookMethod("com.google.android.gms.common.api.GoogleApiClient.Builder", lpparam.classLoader, "build", new XC_MethodHook() {
                 @Override
@@ -188,6 +186,31 @@ public class XposedClass implements IXposedHookLoadPackage {
         }
         catch (XposedHelpers.ClassNotFoundError error){
             XposedBridge.log("CLASS NOT FOUND -> com.google.android.gms.location.FusedLocationProviderApi.requestLocationUpdate()");
+        }
+    }
+
+    private void hookOpenConnection(final LoadPackageParam lpparam) {
+        //TODO get the URL object here to extract host and protocol type
+        try {
+            findAndHookMethod("java.net.URL",
+                   lpparam.classLoader,
+                    "openConnection", new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    URL url = (URL)param.thisObject;
+                    XposedBridge.log("\n\thost is: " + url.getHost() +
+                            "\n\tport is: " + url.getPort() +
+                            "\n\tProtocol is:" + url.getProtocol() +
+                            "\n\tUserInfor is:" + url.getUserInfo() +
+                            "\n\tQuery is: " + url.getQuery());
+                    XposedBridge.log("\tInside java.net.URL.openConnection() <- called by " + lpparam.packageName);
+                }
+            });
+        } catch (NoSuchMethodError e) {
+            XposedBridge.log("METHOD NOT FOUND ->Inside java.net.URL.openConnection() <- called by " + lpparam.packageName);
+        }
+        catch (XposedHelpers.ClassNotFoundError error){
+            XposedBridge.log("CLASS NOT FOUND ->java.net.URL <- for openConnection()");
         }
     }
 }
