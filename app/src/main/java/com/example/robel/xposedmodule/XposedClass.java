@@ -1,6 +1,5 @@
 package com.example.robel.xposedmodule;
 
-
 import java.net.URL;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
@@ -8,16 +7,14 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam;
+
 import static de.robv.android.xposed.XposedHelpers.findAndHookMethod;
-import static de.robv.android.xposed.XposedHelpers.findMethodBestMatch;
-import static de.robv.android.xposed.XposedHelpers.findMethodExact;
 
 //IXposedHookLoadPackage
 //Get notified when an app ("Android package") is loaded.
 // This is especially useful to hook some app-specific methods.
 public class XposedClass implements IXposedHookLoadPackage {
-
-    //String array to hold our top 100 android apps class path.
+    //String array to hold our 100 android apps package path.
     private String appsToHook []= {"com.example.robel.testideavim",
             "teamtreehouse.com.iamhere"};
 
@@ -167,7 +164,6 @@ public class XposedClass implements IXposedHookLoadPackage {
     private void hookRequestLocationUpdates(final LoadPackageParam lpparam) {
         //TODO more than one variables of requestLocationUpdates() method
         try {
-            //public PendingResult<Status> requestLocationUpdates(GoogleApiClient client, final LocationRequest request, final LocationListener listener)
             //public PendingResult<Status> requestLocationUpdates(GoogleApiClient client, final LocationRequest request, final LocationListener listener)
             findAndHookMethod("com.google.android.gms.internal.lu",
                     lpparam.classLoader,
