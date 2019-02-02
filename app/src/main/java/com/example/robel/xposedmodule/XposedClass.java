@@ -1,6 +1,7 @@
 package com.example.robel.xposedmodule;
 
 import java.net.URL;
+import java.util.ArrayList;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
@@ -14,19 +15,25 @@ import static de.robv.android.xposed.XposedHelpers.findAndHookMethod;
 //Get notified when an app ("Android package") is loaded.
 // This is especially useful to hook some app-specific methods.
 public class XposedClass implements IXposedHookLoadPackage {
-    //String array to hold our 100 android apps package path.
-    private String appsToHook []= {"com.example.robel.testideavim",
-            "teamtreehouse.com.iamhere"};
+
+    //ArrayList to hold 100 test android packages.
+    private ArrayList<String> packageList;
 
     @Override
     public void handleLoadPackage(final LoadPackageParam lpparam) throws Throwable {
+        packageList = new ArrayList<>();
+        packageList.add("com.example.robel.testideavim");
+        packageList.add("teamtreehouse.com.iamhere");
+
+        //TODO Add test package name to packageList
+
         XposedBridge.log("\tLoaded app: " + lpparam.packageName);
         hookOnpackage(lpparam);
     }
 
     public void hookOnpackage(LoadPackageParam lpparam){
         //Let's restric this hooking to only sample apps
-        if(lpparam.packageName.equals(appsToHook[0]) || lpparam.packageName.equals(appsToHook[1])) {
+        if(packageList.contains(lpparam.packageName)) {
             //TODO these hooking methods have duplicate codes.
             hookOnDummyApp(lpparam); //com.robel.testIdeaVim.setOutput()
             hookOnNetworkInfo(lpparam); //android.net.NetworkInfo.getTypeName()
