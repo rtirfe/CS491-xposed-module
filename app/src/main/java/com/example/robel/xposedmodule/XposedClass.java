@@ -19,43 +19,41 @@ public class XposedClass implements IXposedHookLoadPackage {
     //ArrayList to hold 100 test android packages.
     private ArrayList<String> packageList;
 
+    /*  Get notified when an app ("Android package") is loaded.
+     */
     @Override
     public void handleLoadPackage(final LoadPackageParam lpparam) throws Throwable {
-        packageList = new ArrayList<>();
+        packageList = new ArrayList<>();//ArrayList to store top 100 apps package name.
         packageList.add("com.example.robel.testideavim");
         packageList.add("teamtreehouse.com.iamhere");
 
-        //TODO Add test package name to packageList
-
-        XposedBridge.log("\tLoaded app: " + lpparam.packageName);
-        hookOnpackage(lpparam);
+        this.hookOnpackage(lpparam);
     }
 
     public void hookOnpackage(LoadPackageParam lpparam){
-        //Let's restric this hooking to only sample apps
+        //Log what "Android package" is loaded.
+        XposedBridge.log("\tLoaded app: " + lpparam.packageName);
+
+        //Verifies and hooks only to package that are in the PackageList array.
         if(packageList.contains(lpparam.packageName)) {
-            //TODO these hooking methods have duplicate codes.
+            //TODO how to deal with method overloading.
             hookOnDummyApp(lpparam); //com.robel.testIdeaVim.setOutput()
             hookOnNetworkInfo(lpparam); //android.net.NetworkInfo.getTypeName()
             hookGetActiveNetworkInfo(lpparam); //android.net.ConnectivityManager.getActiveNetworkInfo()
             hookLocationServiceObject(lpparam);
             hookBuild(lpparam); //com.google.android.gms.common.api.GoogleApiClient.Builder.build();
             hookGetLastLocation(lpparam);//com.google.android.gms.internal.lu
-            hookRequestLocationUpdates(lpparam);//
-            hookOpenConnection(lpparam);
+            hookRequestLocationUpdates(lpparam);//com.google.android.gms.internal.lu.requestLocationUpdates
+            hookOpenConnection(lpparam);//java.net.URL.openConnection
         }
     }
 
     // Below are hooking methods
-
+    /*
+    *Hooks the dummy app
+    * */
     private void hookOnDummyApp(final LoadPackageParam lpparam) {
         try {
-//            CaptionEditText = XposedHelpers.findClass(PACKAGES.SNAPCHAT + ".ui.caption.CaptionEditText", CLSnapChat);
-            //  Class<?> myclass = XposedHelpers.findClass("MainActivity",lpparam.classLoader);
-//            XposedHelpers.findField(CaptionEditText, "m").get(param.thisObject);
-            // Field field = XposedHelpers.findField(myclass,"count");
-            //int myInt = field.getInt(myclass);
-
             findAndHookMethod(lpparam.packageName +
                             ".MainActivity", lpparam.classLoader,
                     "setOutput",
@@ -86,9 +84,15 @@ public class XposedClass implements IXposedHookLoadPackage {
 //        }
     }
 
+    /*
+    *This method will hook android.net.NetworkInfo.getTypeName() function call
+    * */
     private void hookOnNetworkInfo(final LoadPackageParam lpparam){
         try {
-            findAndHookMethod("android.net.NetworkInfo", lpparam.classLoader, "getTypeName", new XC_MethodHook() {
+            findAndHookMethod("android.net.NetworkInfo",
+                    lpparam.classLoader,
+                    "getTypeName",
+                    new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     XposedBridge.log("\tInside android.net.NetworkInfo.getTypeName() <- called by "+lpparam.packageName);
@@ -102,6 +106,9 @@ public class XposedClass implements IXposedHookLoadPackage {
         }
     }
 
+    /*
+    *This method will hook android.net.connectivityManager.getActiveNetworkInfo() function call
+    * */
     private void hookGetActiveNetworkInfo(final LoadPackageParam lpparam) {
         try {
             findAndHookMethod("android.net.ConnectivityManager",
@@ -123,9 +130,15 @@ public class XposedClass implements IXposedHookLoadPackage {
 
     }
 
+    /*
+    *This method will hook com.google.android.gms.common.api.GoogleApiClient.Builder.build() function call
+    * */
     private void hookBuild(final LoadPackageParam lpparam){
         try {
-            findAndHookMethod("com.google.android.gms.common.api.GoogleApiClient.Builder", lpparam.classLoader, "build", new XC_MethodHook() {
+            findAndHookMethod("com.google.android.gms.common.api.GoogleApiClient.Builder",
+                    lpparam.classLoader,
+                    "build",
+                    new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     XposedBridge.log("\tInside com.google.android.gms.common.api.GoogleApiClient.Builder.build() <- called by " + lpparam.packageName);
@@ -139,6 +152,9 @@ public class XposedClass implements IXposedHookLoadPackage {
         }
     }
 
+    /*
+    * An example/ Sample code: How to hook a class
+    * */
     private void hookLocationServiceObject(final LoadPackageParam lpparam){
 
         //This will check to see if "teamtreehouse.com.iamhere" instantiated a LocationServices object, if not return is null.
@@ -148,8 +164,9 @@ public class XposedClass implements IXposedHookLoadPackage {
             XposedBridge.log("CLASS -> com.google.gms.location.LocationServices " + myLocationServicesClass.getName());
     }
 
+    /* This method will hook com.google.android.gms.common.api.GoogleApiClient.getLastLocation() function call
+    * */
     private void hookGetLastLocation(final LoadPackageParam lpparam) {
-        // public Location getLastLocation(GoogleApiClient client)
         try {
             findAndHookMethod("com.google.android.gms.internal.lu",
                     lpparam.classLoader,
@@ -168,6 +185,9 @@ public class XposedClass implements IXposedHookLoadPackage {
         }
     }
 
+    /*
+    *This method will hook com.google.android.gms.location.FusedLocationProviderApi.requestLocationUpdate() function call
+    * */
     private void hookRequestLocationUpdates(final LoadPackageParam lpparam) {
         //TODO more than one variables of requestLocationUpdates() method
         try {
@@ -192,23 +212,26 @@ public class XposedClass implements IXposedHookLoadPackage {
         }
     }
 
+    /*
+     * This method will hook java.net.URL.openConnection() function call
+     * */
     private void hookOpenConnection(final LoadPackageParam lpparam) {
         //TODO get the URL object here to extract host and protocol type
         try {
             findAndHookMethod("java.net.URL",
-                   lpparam.classLoader,
+                    lpparam.classLoader,
                     "openConnection", new XC_MethodHook() {
-                @Override
-                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    URL url = (URL)param.thisObject;
-                    XposedBridge.log("\n\thost is: " + url.getHost() +
-                            "\n\tport is: " + url.getPort() +
-                            "\n\tProtocol is:" + url.getProtocol() +
-                            "\n\tUserInfor is:" + url.getUserInfo() +
-                            "\n\tQuery is: " + url.getQuery());
-                    XposedBridge.log("\tInside java.net.URL.openConnection() <- called by " + lpparam.packageName);
-                }
-            });
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                            URL url = (URL)param.thisObject;
+                            XposedBridge.log("\n\thost is: " + url.getHost() +
+                                    "\n\tport is: " + url.getPort() +
+                                    "\n\tProtocol is:" + url.getProtocol() +
+                                    "\n\tUserInfor is:" + url.getUserInfo() +
+                                    "\n\tQuery is: " + url.getQuery());
+                            XposedBridge.log("\tInside java.net.URL.openConnection() <- called by " + lpparam.packageName);
+                        }
+                    });
         } catch (NoSuchMethodError e) {
             XposedBridge.log("METHOD NOT FOUND ->Inside java.net.URL.openConnection() <- called by " + lpparam.packageName);
         }
