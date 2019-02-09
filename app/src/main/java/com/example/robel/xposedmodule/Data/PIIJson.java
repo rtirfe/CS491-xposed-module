@@ -8,6 +8,18 @@ public class PIIJson {
     private String description;
     private PIIAPIs APIUsed;
 
+    public enum PIIAPIs{
+        //TODO fill this enum with PII APIs
+        //Internet usage APIs
+        openConnection, getActiveNetworkInfo, isConnectedOrConnecting, getConnectionInfo, getAllNetworks, getType,build,
+
+        //End-Users Location APIs
+        getCellLocation, getNeighboringCellInfo, getLastKnownLocation, requestLocationUpdates, getLastLocation, requestLocationUdate,
+
+        //App usage status APIs
+        onCreate, onStart, onResume, onPause, onStop, onRestart, onDestroy
+    }
+
     public PIIJson(Date date, String packageName, PIIAPIs APIUsed, String description) {
         this.date = date;
         this.packageName = packageName;
@@ -54,18 +66,6 @@ public class PIIJson {
                 ", packageName='" + packageName + '\'' +
                 ", APIUsed=" + APIUsed +
                 '}';
-    }
-
-    public enum PIIAPIs{
-        //TODO fill this enum with PII APIs
-        //Internet usage APIs
-        openConnection, getActiveNetworkInfo, isConnectedOrConnecting, getConnectionInfo, getAllNetworks, getType,build,
-
-        //End-Users Location APIs
-        getCellLocation, getNeighboringCellInfo, getLastKnownLocation, requestLocationUpdates, getLastLocation, requestLocationUdate,
-
-        //App usage status APIs
-        onCreate, onStart, onResume, onPause, onStop, onRestart, onDestroy
     }
 }
 

@@ -1,5 +1,6 @@
 package com.example.robel.xposedmodule;
 
+import android.app.Activity;
 import android.app.AndroidAppHelper;
 import android.content.Context;
 import android.net.NetworkInfo;
@@ -11,6 +12,7 @@ import com.google.gson.reflect.TypeToken;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -18,6 +20,7 @@ import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
@@ -37,7 +40,7 @@ public class XposedClass implements IXposedHookLoadPackage {
 
     //ArrayList to hold 100 test android packages.
     private ArrayList<String> packageList;
-
+    private List<PIIJson> PIIObjectList= new ArrayList<>();
     /*
     * handleLoadPackage get notified when an app ("Android package") is loaded.
     * */
@@ -63,6 +66,7 @@ public class XposedClass implements IXposedHookLoadPackage {
         //Verifies and hooks only to package that are in the PackageList array.
         if(packageList.contains(lpparam.packageName)) {
             //TODO how to deal with method overloading.
+            hookOnAppLifecycle(lpparam);
             hookOnDummyApp(lpparam); //com.robel.testIdeaVim.setOutput()
             hookOnNetworkInfo(lpparam); //android.net.NetworkInfo.getTypeName()
             hookGetActiveNetworkInfo(lpparam); //android.net.ConnectivityManager.getActiveNetworkInfo()
@@ -74,13 +78,93 @@ public class XposedClass implements IXposedHookLoadPackage {
         }
     }
 
-   /*
-   * Below are hooking methods
-   * */
+    /*
+     * ///////////\\\\\\\\Below are hooking methods///////////\\\\\\\\ *
+     * */
+    private void hookOnAppLifecycle(final LoadPackageParam lpparam) {
+
+        //public void onCreate(@Nullable Bundle savedInstanceState,
+        XposedHelpers.findAndHookMethod(Activity.class, "onCreate", "android.os.Bundle","android.os.PersistableBundle", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) {
+                XposedBridge.log("\tInside Activity.class.onCreate() <- called by "+lpparam.packageName);
+                String description = "Method name: Activity.class.onCreate()";
+                //////writeJsonToFile(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.onCreate, description),
+                 //////       AndroidAppHelper.currentApplication());
+            }
+        });
+
+        //protected void onPause()
+        XposedHelpers.findAndHookMethod(Activity.class, "onPause", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) {
+                XposedBridge.log("\tInside Activity.class.onPause() <- called by "+lpparam.packageName);
+                String description = "Method name: Activity.class.onPause()";
+                //////writeJsonToFile(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.onPause, description),
+                 //////       AndroidAppHelper.currentApplication());
+            }
+        });
+
+        // protected void onDestroy()
+        XposedHelpers.findAndHookMethod(Activity.class, "onDestroy", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) {
+                XposedBridge.log("\tInside Activity.class.onDestroy() <- called by "+lpparam.packageName);
+                String description = "Method name: Activity.class.onDestroy()";
+                //////writeJsonToFile(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.onDestroy, description),
+                 //////       AndroidAppHelper.currentApplication());
+            }
+        });
+
+        //protected void onStop()
+        XposedHelpers.findAndHookMethod(Activity.class, "onStop", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) {
+                XposedBridge.log("\tInside Activity.class.onStop() <- called by "+lpparam.packageName);
+                String description = "Method name: Activity.class.onStop()";
+                //////writeJsonToFile(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.onStop, description),
+                 //////       AndroidAppHelper.currentApplication());
+            }
+        });
+
+        //protected void onStart()
+        XposedHelpers.findAndHookMethod(Activity.class, "onStart", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) {
+                XposedBridge.log("\tInside Activity.class.onStart() <- called by "+lpparam.packageName);
+                String description = "Method name: Activity.class.onStart()";
+                //////writeJsonToFile(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.onStart, description),
+                 //////       AndroidAppHelper.currentApplication());
+            }
+        });
+
+        //protected void onRestart()
+        XposedHelpers.findAndHookMethod(Activity.class, "onRestart", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) {
+                XposedBridge.log("\tInside Activity.class.onRestart() <- called by "+lpparam.packageName);
+                String description = "Method name: Activity.class.onRestart()";
+                //////writeJsonToFile(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.onRestart, description),
+                 //////       AndroidAppHelper.currentApplication());
+            }
+        });
+
+        //protected void onResume();
+         XposedHelpers.findAndHookMethod(Activity.class, "onResume", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) {
+                XposedBridge.log("\tInside Activity.class.onResume() <- called by "+lpparam.packageName);
+                String description = "Method name: Activity.class.onResume()";
+                //////writeJsonToFile(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.onResume, description),
+                 //////       AndroidAppHelper.currentApplication());
+            }
+        });
+
+    }
 
     /*
-    *This method will hook android.net.NetworkInfo.getTypeName() function call
-    * */
+     *This method will hook android.net.NetworkInfo.getTypeName() function call
+     * */
     //@GOOD
     private void hookOnNetworkInfo(final LoadPackageParam lpparam){
         try {
@@ -88,16 +172,16 @@ public class XposedClass implements IXposedHookLoadPackage {
                     lpparam.classLoader,
                     "getTypeName",
                     new XC_MethodHook() {
-                @Override
-                protected void afterHookedMethod(MethodHookParam param) {
-                    XposedBridge.log("\tInside android.net.NetworkInfo.getTypeName() <- called by "+lpparam.packageName);
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+                            XposedBridge.log("\tInside android.net.NetworkInfo.getTypeName() <- called by "+lpparam.packageName);
 
-                    String description = "Method name: Android.net.NetworkInfo.getTypeName(), " +
-                            "getTypeName: "+ param.getResult();
-                    writeJsonToFile(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.getType , description),
-                            AndroidAppHelper.currentApplication());
-                }
-            });
+                            String description = "Method name: Android.net.NetworkInfo.getTypeName(), " +
+                                    "getTypeName: "+ param.getResult();
+                            ////writeJsonToFile(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.getType , description),
+                             ////       AndroidAppHelper.currentApplication());
+                        }
+                    });
         } catch (NoSuchMethodError e) {
             XposedBridge.log("METHOD NOT FOUND -> android.net.NetworkInfo.getTypeName() <- called by " + lpparam.packageName);
         }
@@ -107,8 +191,8 @@ public class XposedClass implements IXposedHookLoadPackage {
     }
 
     /*
-    *This method will hook android.net.connectivityManager.getActiveNetworkInfo() function call
-    * */
+     *This method will hook android.net.connectivityManager.getActiveNetworkInfo() function call
+     * */
     //@Good
     private void hookGetActiveNetworkInfo(final LoadPackageParam lpparam) {
         try {
@@ -122,8 +206,8 @@ public class XposedClass implements IXposedHookLoadPackage {
                             NetworkInfo networkInfo = (NetworkInfo) param.getResult();
                             String description = "Method name: Android.net.ConnectivityManager.getActiveNetworkInfo, " +
                                     "getActiveNetworkInfo: "+ networkInfo.getTypeName();//Return a human-readable name describe the type of the network.
-                            writeJsonToFile(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.getType , description),
-                                    AndroidAppHelper.currentApplication());
+                            ////writeJsonToFile(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.getType , description),
+                             ////       AndroidAppHelper.currentApplication());
                         }
                     });
         }
@@ -137,8 +221,8 @@ public class XposedClass implements IXposedHookLoadPackage {
     }
 
     /*
-    *This method will hook com.google.android.gms.common.api.GoogleApiClient.Builder.build() function call
-    * */
+     *This method will hook com.google.android.gms.common.api.GoogleApiClient.Builder.build() function call
+     * */
     //@Good
     private void hookBuild(final LoadPackageParam lpparam){
         try {
@@ -146,14 +230,14 @@ public class XposedClass implements IXposedHookLoadPackage {
                     lpparam.classLoader,
                     "build",
                     new XC_MethodHook() {
-                @Override
-                protected void afterHookedMethod(MethodHookParam param) {
-                    XposedBridge.log("\tInside com.google.android.gms.common.api.GoogleApiClient.Builder.build() <- called by " + lpparam.packageName);
-                    String description = "Method name: com.google.android.gms.common.api.GoogleApiClient.Builder.build" ;
-                    writeJsonToFile(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.build, description),
-                            AndroidAppHelper.currentApplication());
-                }
-            });
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+                            XposedBridge.log("\tInside com.google.android.gms.common.api.GoogleApiClient.Builder.build() <- called by " + lpparam.packageName);
+                            String description = "Method name: com.google.android.gms.common.api.GoogleApiClient.Builder.build" ;
+                            ////writeJsonToFile(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.build, description),
+                             ////       AndroidAppHelper.currentApplication());
+                        }
+                    });
         } catch (NoSuchMethodError e) {
             XposedBridge.log("METHOD NOT FOUND -> com.google.android.gms.common.api.GoogleApiClient.Builder.build() <- called by " + lpparam.packageName);
         }
@@ -163,8 +247,8 @@ public class XposedClass implements IXposedHookLoadPackage {
     }
 
     /*
-    *This method will hook com.google.android.gms.common.api.GoogleApiClient.getLastLocation() function call
-    * */
+     *This method will hook com.google.android.gms.common.api.GoogleApiClient.getLastLocation() function call
+     * */
     //@Good
     private void hookGetLastLocation(final LoadPackageParam lpparam) {
         try {
@@ -179,8 +263,8 @@ public class XposedClass implements IXposedHookLoadPackage {
                             String description = "Method name: com.google.android.gms.location.FusedLocationProviderApi.getLastLocation()" +
                                     ", Latitude : " + location.getLatitude() +
                                     ", Longitude : " + location.getLongitude();
-                            writeJsonToFile(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.getLastLocation, description),
-                                    AndroidAppHelper.currentApplication());
+                            ////writeJsonToFile(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.getLastLocation, description),
+                             ////       AndroidAppHelper.currentApplication());
                         }
                     });
         } catch (NoSuchMethodError e) {
@@ -192,8 +276,8 @@ public class XposedClass implements IXposedHookLoadPackage {
     }
 
     /*
-    *This method will hook com.google.android.gms.location.FusedLocationProviderApi.requestLocationUpdate() function call
-    * */
+     *This method will hook com.google.android.gms.location.FusedLocationProviderApi.requestLocationUpdate() function call
+     * */
     //@Good
     private void hookRequestLocationUpdates(final LoadPackageParam lpparam) {
         try {
@@ -209,8 +293,8 @@ public class XposedClass implements IXposedHookLoadPackage {
                         protected void afterHookedMethod(MethodHookParam param) {
                             XposedBridge.log("\tcom.google.android.gms.location.FusedLocationProviderApi.requestLocationUpdate() <- called by " + lpparam.packageName);
                             String description ="Method name: com.android.gms.internal.lu.requestLocationUpdates" ;
-                            writeJsonToFile(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.requestLocationUpdates, description),
-                                    AndroidAppHelper.currentApplication());
+                            ////writeJsonToFile(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.requestLocationUpdates, description),
+                             ////       AndroidAppHelper.currentApplication());
                         }
                     });
         } catch (NoSuchMethodError e) {
@@ -245,8 +329,8 @@ public class XposedClass implements IXposedHookLoadPackage {
                             XposedBridge.log("\tInside java.net.URL.openConnection() <- called by " + lpparam.packageName);
 
                             //This will create and populate a new Json file then write it to db.json
-                            writeJsonToFile(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.openConnection, description),
-                                    AndroidAppHelper.currentApplication());
+                            ////writeJsonToFile(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.openConnection, description),
+                             ////       AndroidAppHelper.currentApplication());
                         }
                     });
         } catch (NoSuchMethodError e) {
@@ -258,15 +342,20 @@ public class XposedClass implements IXposedHookLoadPackage {
     }
 
     /*
-    * A method that creates a json object and writes that object to db.json file.
-    * */
+     * A method that creates a json object and writes that object to db.json file.
+     * */
     private void writeJsonToFile(PIIJson piiJson, Context context ){
         Gson gson = new Gson();
         Type type = new TypeToken<PIIJson>() {}.getType();
         String json = gson.toJson(piiJson, type);
-
-        try (FileOutputStream outputStream = context.openFileOutput( "db.json", Context.MODE_PRIVATE)){
+        byte comma = 0x20;
+        String string = System.getProperty("line.separator");
+        byte [] sepatator = string.getBytes();
+//        OutputStream out = new FileOutputStream(Environment.getExternalStorageDirectory().getAbsolutePath()+"/yourfilename")
+        try (FileOutputStream outputStream = context.openFileOutput( "db.json", Context.MODE_APPEND)){
             outputStream.write(json.getBytes());
+            outputStream.write(sepatator);
+
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -274,12 +363,12 @@ public class XposedClass implements IXposedHookLoadPackage {
     }
 
     /*
-    * methods blow are for testing purpose only.
-    * */
+     * methods blow are for testing purpose only.
+     * */
 
     /*
-    * Still under construction
-    * */
+     * Still under construction
+     * */
     //@TEST
     private void readFileFromSDCard() {
         File directory = Environment.getDataDirectory();
@@ -312,8 +401,8 @@ public class XposedClass implements IXposedHookLoadPackage {
     }
 
     /*
-    *Hooks the dummy app
-    * */
+     *Hooks the dummy app
+     * */
     //@TEST
     private void hookOnDummyApp(final LoadPackageParam lpparam) {
         try {
@@ -348,8 +437,8 @@ public class XposedClass implements IXposedHookLoadPackage {
     }
 
     /*
-    * An example/ Sample code: How to hook a class
-    * */
+     * An example/ Sample code: How to hook a class
+     * */
     //@TEST
     private void hookLocationServiceObject(final LoadPackageParam lpparam){
 
