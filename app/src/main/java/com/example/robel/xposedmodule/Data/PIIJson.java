@@ -11,7 +11,10 @@ public class PIIJson {
     public enum PIIAPIs{
         //TODO fill this enum with PII APIs
         //Internet usage APIs
-        openConnection, getActiveNetworkInfo, isConnectedOrConnecting, getConnectionInfo, getAllNetworks, getType,build,
+        openConnection, getActiveNetworkInfo, isConnectedOrConnecting, getConnectionInfo, getAllNetworks,
+        build,getIPAddress,getMacAddress,getBSSID,getRssi,getSSID,getNetworkId,SimSerialNumber,
+        getNetworkCountryIso,getSimCountryIso,getVoiceMailNumber,getImei,getSubscriberId,getLine1Number,
+        getAddress,getName,getDeviceSoftwareVersion,getTypeName,
 
         //End-Users Location APIs
         getCellLocation, getNeighboringCellInfo, getLastKnownLocation, requestLocationUpdates, getLastLocation, requestLocationUdate,

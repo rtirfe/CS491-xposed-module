@@ -1,7 +1,6 @@
 package com.example.robel.xposedmodule;
 
 import android.app.Activity;
-import android.net.NetworkInfo;
 import android.os.Environment;
 
 import com.example.robel.xposedmodule.Data.PIIJson;
@@ -61,29 +60,45 @@ public class XposedClass implements IXposedHookLoadPackage {
 
         //Verifies and hooks only to package that are in the PackageList array.
         if(packageList.contains(lpparam.packageName)) {
-            //TODO how to deal with method overloading.
             hookOnAppLifecycle(lpparam);
             hookOnDummyApp(lpparam); //com.robel.testIdeaVim.setOutput()
-            hookOnNetworkInfo(lpparam); //android.net.NetworkInfo.getTypeName()
+            hookOnGetTypeName(lpparam); //android.net.NetworkInfo.getTypeName()
             hookGetActiveNetworkInfo(lpparam); //android.net.ConnectivityManager.getActiveNetworkInfo()
             hookLocationServiceObject(lpparam);
             hookBuild(lpparam); //com.google.android.gms.common.api.GoogleApiClient.Builder.build();
             hookGetLastLocation(lpparam);//com.google.android.gms.internal.lu
             hookRequestLocationUpdates(lpparam);//com.google.android.gms.internal.lu.requestLocationUpdates
             hookOpenConnection(lpparam);//java.net.URL.openConnection
+
+            hookGetIPAddress(lpparam); //android.net.wifi.WifiInfo.getIPAddress
+            hookGetMacAddress(lpparam);//android.net.wifi.WifiInfo.getMacAddress
+            hookGetBssid(lpparam);//android.net.wifi.WifiInfo.getBSSID
+            hookGetRssi(lpparam);//android.net.wifi.WifiInfo.getRssi
+            hookGetSsid(lpparam);//android.net.wifi.WifiInfo.getSSID
+            hookGetNetworkId(lpparam);//android.net.wifi.WifiInfo.getNetworkId
+            hookGetSimSerialNumber(lpparam);//android.telephony.TelephonyManager.getSimSerialNumber
+            hookGetNetworkCountryIso(lpparam);//android.telephony.TelephonyManager.getNetworkCountryIso
+            hookGetSimCountryIso(lpparam);//android.telephony.TelephonyManager.getSimCountryIso
+            hookGetDeviceSoftwareVersion(lpparam);//android.telephony.TelephonyManager.getDeviceSoftwareVersion
+            hookGetVoicemailNumber(lpparam);//android.telephony.TelephonyManager.getVoicemailNumber
+            hookGetImei(lpparam);//android.telephony.TelephonyManager.Imei
+            hookGetSubscriberId(lpparam);//android.telephony.TelephonyManager.getSubscriberId
+            hookGetLine1Number(lpparam);//android.telephony.TelephonyManager.getLine1Number
+            hookGetBluetoothAddress(lpparam);//android.bluetooth.BluetoothAdapter.getAddress
         }
     }
 
-    /*
+    /**
      ***********************************************************
      ******                Hooking Methods                ******
      ***********************************************************
+     ** */
+    /*
+     * This method will hook activity/app lifecycle.
+     * OnStart writes a metaData to db.json
+     * OnStop writes the actual json object array to db.json file
      * */
-   /*
-   * This method will hook activity/app lifecycle.
-   * OnStart writes a metaData to db.json
-   * OnStop writes the actual json object array to db.json file
-   * */
+    //@GOOD
     private void hookOnAppLifecycle(final LoadPackageParam lpparam) {
 
         /*
@@ -186,9 +201,10 @@ public class XposedClass implements IXposedHookLoadPackage {
 
     /*
      *This method will hook android.net.NetworkInfo.getTypeName() function call
+     * Return a human-readable name describe the type of the network, for example "WIFI" or "MOBILE".
      * */
     //@GOOD
-    private void hookOnNetworkInfo(final LoadPackageParam lpparam){
+    private void hookOnGetTypeName(final LoadPackageParam lpparam){
         try {
             findAndHookMethod("android.net.NetworkInfo",
                     lpparam.classLoader,
@@ -199,9 +215,10 @@ public class XposedClass implements IXposedHookLoadPackage {
                             XposedBridge.log("\tInside android.net.NetworkInfo.getTypeName() <- called by "+lpparam.packageName);
 
                             String description = "Method name: Android.net.NetworkInfo.getTypeName(), " +
-                                    "getTypeName: "+ param.getResult();
-                            ////writeToFile(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.getType , description),
-                            ////       AndroidAppHelper.currentApplication());
+                                    "Network Type Name: "+ param.getResult();
+                            XposedBridge.log(description);
+                            PIIObjectList.add(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.getTypeName, description));
+
                         }
                     });
         } catch (NoSuchMethodError e) {
@@ -214,8 +231,9 @@ public class XposedClass implements IXposedHookLoadPackage {
 
     /*
      *This method will hook android.net.connectivityManager.getActiveNetworkInfo() function call
+     * Returns details about the currently active default data network.
      * */
-    //@Good
+    //@GOOD
     private void hookGetActiveNetworkInfo(final LoadPackageParam lpparam) {
         try {
             findAndHookMethod("android.net.ConnectivityManager",
@@ -225,11 +243,9 @@ public class XposedClass implements IXposedHookLoadPackage {
                         @Override
                         protected void afterHookedMethod(MethodHookParam param) {
                             XposedBridge.log("\tInside android.net.ConnectivityManager.getActiveNetworkInfo() <- called by " + lpparam.packageName);
-                            NetworkInfo networkInfo = (NetworkInfo) param.getResult();
-                            String description = "Method name: Android.net.ConnectivityManager.getActiveNetworkInfo, " +
-                                    "getActiveNetworkInfo: "+ networkInfo.getTypeName();//Return a human-readable name describe the type of the network.
-                            ////writeToFile(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.getType , description),
-                            ////       AndroidAppHelper.currentApplication());
+                            String description = "Method name: Android.net.ConnectivityManager.getActiveNetworkInfo";
+                            XposedBridge.log(description);
+                            PIIObjectList.add(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.getActiveNetworkInfo, description));
                         }
                     });
         }
@@ -245,7 +261,7 @@ public class XposedClass implements IXposedHookLoadPackage {
     /*
      *This method will hook com.google.android.gms.common.api.GoogleApiClient.Builder.build() function call
      * */
-    //@Good
+    //@GOOD
     private void hookBuild(final LoadPackageParam lpparam){
         try {
             findAndHookMethod("com.google.android.gms.common.api.GoogleApiClient.Builder",
@@ -256,8 +272,8 @@ public class XposedClass implements IXposedHookLoadPackage {
                         protected void afterHookedMethod(MethodHookParam param) {
                             XposedBridge.log("\tInside com.google.android.gms.common.api.GoogleApiClient.Builder.build() <- called by " + lpparam.packageName);
                             String description = "Method name: com.google.android.gms.common.api.GoogleApiClient.Builder.build" ;
-                            ////writeToFile(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.build, description),
-                            ////       AndroidAppHelper.currentApplication());
+                            XposedBridge.log(description);
+                            PIIObjectList.add(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.build, description));
                         }
                     });
         } catch (NoSuchMethodError e) {
@@ -271,7 +287,7 @@ public class XposedClass implements IXposedHookLoadPackage {
     /*
      *This method will hook com.google.android.gms.common.api.GoogleApiClient.getLastLocation() function call
      * */
-    //@Good
+    //@GOOD
     private void hookGetLastLocation(final LoadPackageParam lpparam) {
         try {
             findAndHookMethod("com.google.android.gms.internal.lu",
@@ -285,8 +301,8 @@ public class XposedClass implements IXposedHookLoadPackage {
                             String description = "Method name: com.google.android.gms.location.FusedLocationProviderApi.getLastLocation()" +
                                     ", Latitude : " + location.getLatitude() +
                                     ", Longitude : " + location.getLongitude();
-                            ////writeToFile(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.getLastLocation, description),
-                            ////       AndroidAppHelper.currentApplication());
+                            XposedBridge.log(description);
+                            PIIObjectList.add(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.getLastLocation, description));
                         }
                     });
         } catch (NoSuchMethodError e) {
@@ -300,7 +316,7 @@ public class XposedClass implements IXposedHookLoadPackage {
     /*
      *This method will hook com.google.android.gms.location.FusedLocationProviderApi.requestLocationUpdate() function call
      * */
-    //@Good
+    //@GOOD
     private void hookRequestLocationUpdates(final LoadPackageParam lpparam) {
         try {
             //public PendingResult<Status> requestLocationUpdates(GoogleApiClient client, final LocationRequest request, final LocationListener listener)
@@ -314,9 +330,9 @@ public class XposedClass implements IXposedHookLoadPackage {
                         @Override
                         protected void afterHookedMethod(MethodHookParam param) {
                             XposedBridge.log("\tcom.google.android.gms.location.FusedLocationProviderApi.requestLocationUpdate() <- called by " + lpparam.packageName);
-                            String description ="Method name: com.android.gms.internal.lu.requestLocationUpdates" ;
-                            ////writeToFile(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.requestLocationUpdates, description),
-                            ////       AndroidAppHelper.currentApplication());
+                            String description ="Method name : com.android.gms.internal.lu.requestLocationUpdates" ;
+                            XposedBridge.log(description);
+                            PIIObjectList.add(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.requestLocationUpdates, description));
                         }
                     });
         } catch (NoSuchMethodError e) {
@@ -343,8 +359,8 @@ public class XposedClass implements IXposedHookLoadPackage {
                             String description ="Method name: java.net.URL.openConnection" +
                                     ", host : " + url.getHost() +
                                     ", port : " + url.getPort() +
-                                    ", Protocol :" + url.getProtocol() +
-                                    ", UserInfo :" + url.getUserInfo() +
+                                    ", Protocol : " + url.getProtocol() +
+                                    ", UserInfo : " + url.getUserInfo() +
                                     ", Query : " + url.getQuery();
 
                             XposedBridge.log(description);
@@ -399,10 +415,417 @@ public class XposedClass implements IXposedHookLoadPackage {
     }
 
     /*
+     ***********************************************************
+     ******                 ANDREW                        ******
+     ***********************************************************
+     * */
+
+    //This method will hook android.net.wifi.WifiInfo.getIPAddress()
+    //@GOOD
+    private void hookGetIPAddress(final LoadPackageParam lpparam){
+        try{
+            //maybe just android.net.wifi
+            findAndHookMethod("android.net.wifi.WifiInfo",
+                    lpparam.classLoader,
+                    "getIPAddress", new XC_MethodHook(){
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+                            XposedBridge.log("Inside android.net.wifi.WifiInfo.getIPAddress() <- called by " + lpparam.packageName);
+                            StringBuilder description = new StringBuilder( "Method name: android.net.wifi.WifiInfo.getIPAddress");
+                            // getResult() will give us the return values.
+                            description.append( ", IP Address: "+ param.getResult());
+                            XposedBridge.log(description.toString());
+                            PIIObjectList.add(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.getIPAddress, description.toString()));
+                        }
+                    });
+        } catch(NoSuchMethodError e){
+            XposedBridge.log("METHOD NOT FOUND -> android.net.wifi.WifiInfo.getIPAddress() <- called by " + lpparam.packageName);
+        }catch(XposedHelpers.ClassNotFoundError error){
+            XposedBridge.log("CLASS NOT FOUND -> android.net.wifi.WifiInfo <- for getIPAddress()");
+        }
+    }
+
+    //This method will hook android.net.wifi.wifiInfo.getMacAddress()
+    //@GOOD
+    private void hookGetMacAddress(final LoadPackageParam lpparam){
+        try{
+            findAndHookMethod("android.net.wifi.WifiInfo",
+                    lpparam.classLoader,
+                    "getMacAddress", new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+
+                            XposedBridge.log("Inside android.net.wifi.WifiInfo.getMacAddress() <- called by " + lpparam.packageName);
+                            StringBuilder description = new StringBuilder( "Method name: android.net.wifi.WifiInfo.getMACAddress");
+                            // getResult() will give us the return values, witch is MACAddress.
+                            description.append( ", MACAddress: "+ param.getResult());
+                            XposedBridge.log(description.toString());
+                            PIIObjectList.add(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.getMacAddress, description.toString()));
+                        }
+                    });
+        }catch (NoSuchMethodError e){
+            XposedBridge.log("METHOD NOT FOUND -> android.net.wifi.WifiInfo.getMacAddress() <- called by " + lpparam.packageName);
+        }catch(XposedHelpers.ClassNotFoundError error){
+            XposedBridge.log("CLASS NOT FOUND -> android.net.wifi.WifiInfo <- for getMacAddress()");
+        }
+    }
+
+    //This method will hook android.net.wifi.wifiInfo.getBSSID()
+    //Return the basic service set identifier (BSSID) of the current access point
+    //@GOOD
+    private void hookGetBssid(final LoadPackageParam lpparam){
+        try{
+            findAndHookMethod("android.net.wifi.WifiInfo",
+                    lpparam.classLoader,
+                    "getBSSID", new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+                            XposedBridge.log("Inside android.net.wifi.WifiInfo.getBSSID() <- called by " + lpparam.packageName);
+                            StringBuilder description = new StringBuilder( "Method name: android.net.wifi.WifiInfo.getBSSID");
+                            // getResult() will give us the return values.
+                            description.append( ", BSSID: "+ param.getResult());
+                            XposedBridge.log(description.toString());
+                            PIIObjectList.add(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.getBSSID, description.toString()));
+
+                        }
+                    });
+        }catch (NoSuchMethodError e){
+            XposedBridge.log("METHOD NOT FOUND -> android.net.wifi.WifiInfo.getBSSID() <- called by " + lpparam.packageName);
+        }catch(XposedHelpers.ClassNotFoundError error){
+            XposedBridge.log("CLASS NOT FOUND -> android.net.wifi.WifiInfo <- for getBSSID()");
+        }
+    }
+
+    //This method will hook android.net.wifi.wifiInfo.getRssi()
+    //Returns the received signal strength indicator of the current 802.11 network, in dBm
+    //@GOOD
+    private void hookGetRssi(final LoadPackageParam lpparam){
+        try{
+            findAndHookMethod("android.net.wifi.WifiInfo",
+                    lpparam.classLoader,
+                    "getRssi", new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+
+                            XposedBridge.log("Inside android.net.wifi.WifiInfo.getRssi() <- called by " + lpparam.packageName);
+                            StringBuilder description = new StringBuilder( "Method name: android.net.wifi.WifiInfo.getRssi");
+                            // getResult() will give us the return values.
+                            description.append( ", Rssi: "+ param.getResult());
+                            XposedBridge.log(description.toString());
+                            PIIObjectList.add(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.getRssi, description.toString()));
+
+                        }
+                    });
+        }catch (NoSuchMethodError e){
+            XposedBridge.log("METHOD NOT FOUND -> android.net.wifi.WifiInfo.getRssi() <- called by " + lpparam.packageName);
+        }catch(XposedHelpers.ClassNotFoundError error){
+            XposedBridge.log("CLASS NOT FOUND -> android.net.wifi.WifiInfo <- for getRssi()");
+        }
+    }
+
+    //This method will hook android.net.wifi.wifiInfo.getSSID()
+    //Returns the service set identifier (SSID) of the current 802.11 network.
+    //@GOOD
+    private void hookGetSsid(final LoadPackageParam lpparam){
+        try{
+            findAndHookMethod("android.net.wifi.WifiInfo",
+                    lpparam.classLoader,
+                    "getSSID", new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+                            XposedBridge.log("Inside android.net.wifi.WifiInfo.getSSID() <- called by " + lpparam.packageName);
+                            StringBuilder description = new StringBuilder( "Method name: android.net.wifi.WifiInfo.getSSID");
+                            // getResult() will give us the return values.
+                            description.append( ", SSID: "+ param.getResult());
+                            XposedBridge.log(description.toString());
+                            PIIObjectList.add(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.getSSID, description.toString()));
+                        }
+                    });
+        }catch (NoSuchMethodError e){
+            XposedBridge.log("METHOD NOT FOUND -> android.net.wifi.WifiInfo.getSSID() <- called by " + lpparam.packageName);
+        }catch(XposedHelpers.ClassNotFoundError error){
+            XposedBridge.log("CLASS NOT FOUND -> android.net.wifi.WifiInfo <- for getSSID()");
+        }
+    }
+
+    //This method will hook android.net.wifi.wifiInfo.getNetworkId
+    //@GOOD
+    private void hookGetNetworkId(final LoadPackageParam lpparam){
+        try{
+            findAndHookMethod("android.net.wifi.WifiInfo",
+                    lpparam.classLoader,
+                    "getNetworkId", new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+                            XposedBridge.log("Inside android.net.wifi.WifiInfo.getNetworkId() <- called by " + lpparam.packageName);
+                            StringBuilder description = new StringBuilder( "Method name: android.net.wifi.WifiInfo.getNetworkId");
+                            description.append( ", Network Id: "+ param.getResult());
+                            XposedBridge.log(description.toString());
+                            PIIObjectList.add(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.getNetworkId, description.toString()));
+                        }
+                    });
+        }catch (NoSuchMethodError e){
+            XposedBridge.log("METHOD NOT FOUND -> android.net.wifi.WifiInfo.getNetworkId() <- called by " + lpparam.packageName);
+        }catch(XposedHelpers.ClassNotFoundError error){
+            XposedBridge.log("CLASS NOT FOUND -> android.net.wifi.WifiInfo <- for getNetworkId()");
+        }
+    }
+
+    //This method will hook android.telephony.TelephonyManager.getSimSerialNumber()
+    //Returns the serial number of the SIM, if applicable. Return null if it is unavailable.
+    //@GOOD
+    private void hookGetSimSerialNumber(final LoadPackageParam lpparam){
+        try{
+            findAndHookMethod("android.telephony.TelephonyManager",
+                    lpparam.classLoader,
+                    "getSimSerialNumber", new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+
+                            XposedBridge.log("Inside android.telephony.TelephonyManager.SimSerialNumber() <- called by " + lpparam.packageName);
+                            StringBuilder description = new StringBuilder( "Method name: android.telephony.TelephonyManager.SimSerialNumber");
+                            //If serial number exists , log that or log 'no serial number '
+                            description.append( ", Sim Serial Number: "+ ( (param.getResult()== null) ? "No serial number" : param.getResult()) );
+                            XposedBridge.log(description.toString());
+                            PIIObjectList.add(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.SimSerialNumber, description.toString()));
+                        }
+                    });
+        }catch (NoSuchMethodError e){
+            XposedBridge.log("METHOD NOT FOUND -> android.telephony.TelephonyManager.getSimSerialNumber() <- called by " + lpparam.packageName);
+        }catch(XposedHelpers.ClassNotFoundError error){
+            XposedBridge.log("CLASS NOT FOUND -> android.telephony.TelephonyManager <- for getSimSerialNumber()");
+        }
+    }
+
+    //This method will hook android.telephony.TelephonyManager.getNetworkCountryIso()
+    //Returns the ISO country code equivalent of the MCC (Mobile Country Code)
+    //@GOOD
+    private void hookGetNetworkCountryIso(final LoadPackageParam lpparam){
+        try{
+            findAndHookMethod("android.telephony.TelephonyManager",
+                    lpparam.classLoader,
+                    "getNetworkCountryIso", new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+                            XposedBridge.log("Inside android.telephony.TelephonyManager.getNetworkCountryIso() <- called by " + lpparam.packageName);
+                            StringBuilder description = new StringBuilder( "Method name: android.telephony.TelephonyManager.getNetworkCountryIso");
+                            description.append( ", Network Country Iso: "+ param.getResult());
+                            XposedBridge.log(description.toString());
+                            PIIObjectList.add(new PIIJson(new Date(), lpparam.packageName, PIIJson.PIIAPIs.getNetworkCountryIso, description.toString()));
+
+                        }
+                    });
+        }catch (NoSuchMethodError e){
+            XposedBridge.log("METHOD NOT FOUND -> android.telephony.TelephonyManager.getNetworkCountryIso() <- called by " + lpparam.packageName);
+        }catch(XposedHelpers.ClassNotFoundError error){
+            XposedBridge.log("CLASS NOT FOUND -> android.telephony.TelephonyManager <- for getNetworkCountryIso()");
+        }
+    }
+
+    //This method will hook android.telephony.TelephonyManager.getSimCountryIso()
+    //Returns the ISO country code equivalent for the SIM provider's country code.
+    //@GOOD
+    private void hookGetSimCountryIso(final LoadPackageParam lpparam){
+        try{
+            findAndHookMethod("android.telephony.TelephonyManager",
+                    lpparam.classLoader,
+                    "getSimCountryIso", new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+                            XposedBridge.log("Inside android.telephony.TelephonyManager.getSimCountryIso() <- called by " + lpparam.packageName);
+                            StringBuilder description = new StringBuilder( "Method name: android.telephony.TelephonyManager.getSimCountryIso");
+                            description.append( ", Sim Country Iso: "+ param.getResult());
+                            XposedBridge.log(description.toString());
+                            PIIObjectList.add(new PIIJson(new Date(), lpparam.packageName, PIIJson.PIIAPIs.getSimCountryIso, description.toString()));
+
+                        }
+                    });
+        }catch (NoSuchMethodError e){
+            XposedBridge.log("METHOD NOT FOUND -> android.telephony.TelephonyManager.getSimCountryIso() <- called by " + lpparam.packageName);
+        }catch(XposedHelpers.ClassNotFoundError error){
+            XposedBridge.log("CLASS NOT FOUND -> android.telephony.TelephonyManager <- for getSimCountryIso()");
+        }
+    }
+
+    //This method will hook android.telephony.TelephonyManager.getSoftwareVersion()
+    //Returns the software version number for the device, for example, the IMEI/SV for GSM phones. Return null if the software version is not available.
+    //@GOOD
+    private void hookGetDeviceSoftwareVersion(final LoadPackageParam lpparam){
+        try{
+            findAndHookMethod("android.telephony.TelephonyManager",
+                    lpparam.classLoader,
+                    "getDeviceSoftwareVersion", new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+                            XposedBridge.log("Inside android.telephony.TelephonyManager.getDeviceSoftwareVersion() <- called by " + lpparam.packageName);
+                            StringBuilder description = new StringBuilder( "Method name: android.telephony.TelephonyManager.getDeviceSoftwareVersion");
+                            //If software version exists ,log that or log No device Software Version '
+                            description.append( ", Sim Serial Number: "+ ( (param.getResult()== null) ? " No device Software Version" : param.getResult()) );
+                            XposedBridge.log(description.toString());
+                            PIIObjectList.add(new PIIJson(new Date(), lpparam.packageName, PIIJson.PIIAPIs.getDeviceSoftwareVersion, description.toString()));
+                        }
+                    });
+        }catch (NoSuchMethodError e){
+            XposedBridge.log("METHOD NOT FOUND -> android.telephony.TelephonyManager.getSoftwareVersion() <- called by " + lpparam.packageName);
+        }catch(XposedHelpers.ClassNotFoundError error){
+            XposedBridge.log("CLASS NOT FOUND -> android.telephony.TelephonyManager <- for getSoftwareVersion()");
+        }
+    }
+
+    //This method will hook android.telephony.TelephonyManager.getVoicemailNumber()
+    //Returns the voice mail number. Return null if it is unavailable.
+    //@GOOD
+    private void hookGetVoicemailNumber(final LoadPackageParam lpparam){
+        try{
+            findAndHookMethod("android.telephony.TelephonyManager",
+                    lpparam.classLoader,
+                    "getVoiceMailNumber", new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+                            XposedBridge.log("Inside android.telephony.TelephonyManager.getVoiceMailNumber() <- called by " + lpparam.packageName);
+                            StringBuilder description = new StringBuilder( "Method name : android.telephony.TelephonyManager.getVoiceMailNumber");
+                            description.append( ", Voice Mail Number : "+ param.getResult());
+                            XposedBridge.log(description.toString());
+                            PIIObjectList.add(new PIIJson(new Date(), lpparam.packageName, PIIJson.PIIAPIs.getVoiceMailNumber, description.toString()));
+                        }
+                    });
+        }catch (NoSuchMethodError e){
+            XposedBridge.log("METHOD NOT FOUND -> android.telephony.TelephonyManager.getVoiceMailNumber() <- called by " + lpparam.packageName);
+        }catch(XposedHelpers.ClassNotFoundError error){
+            XposedBridge.log("CLASS NOT FOUND -> android.telephony.TelephonyManager <- for getVoiceMailNumber()");
+        }
+    }
+
+    //This method will hook android.telephony.TelephonyManager.getImei()
+    //Returns the IMEI (International Mobile Equipment Identity). Return null if IMEI is not available.
+    //@GOOD
+    private void hookGetImei(final LoadPackageParam lpparam){
+        try{
+            findAndHookMethod("android.telephony.TelephonyManager",
+                    lpparam.classLoader,
+                    "getImei", new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+                            XposedBridge.log("Inside android.telephony.TelephonyManager.getImei() <- called by " + lpparam.packageName);
+                            StringBuilder description = new StringBuilder( "Method name: android.telephony.TelephonyManager.getImei");
+                            //If IMEI exists, log that or log 'no IMEI number '
+                            description.append( ", IMEI : "+ ( (param.getResult()== null) ? "No IMEI number" : param.getResult()) );
+                            XposedBridge.log(description.toString());
+                            PIIObjectList.add(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.getImei, description.toString()));
+                        }
+                    });
+        }catch (NoSuchMethodError e){
+            XposedBridge.log("METHOD NOT FOUND -> android.telephony.TelephonyManager.getImei() <- called by " + lpparam.packageName);
+        }catch(XposedHelpers.ClassNotFoundError error){
+            XposedBridge.log("CLASS NOT FOUND -> android.telephony.TelephonyManager <- for getImei()");
+        }
+    }
+
+    //This method will hook android.telephony.TelephonyManager.getSubscriberId()
+    //Returns the unique subscriber ID, for example, the IMSI for a GSM phone. Return null if it is unavailable.
+    //@GOOD
+    private void hookGetSubscriberId(final LoadPackageParam lpparam){
+        try{
+            findAndHookMethod("android.telephony.TelephonyManager",
+                    lpparam.classLoader,
+                    "getSubscriberId", new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+
+                            XposedBridge.log("Inside android.telephony.TelephonyManager.getSubscriberId() <- called by " + lpparam.packageName);
+                            StringBuilder description = new StringBuilder( "Method name: android.telephony.TelephonyManager.getSubscriberId");
+                            //If ID exists ,log that or log 'no SubscriberId'
+                            description.append( ", IMEI : "+ ( (param.getResult()== null) ? "No SubscriberID" : param.getResult()) );
+                            XposedBridge.log(description.toString());
+                            PIIObjectList.add(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.getSubscriberId, description.toString()));
+                        }
+                    });
+        }catch (NoSuchMethodError e){
+            XposedBridge.log("METHOD NOT FOUND -> android.telephony.TelephonyManager.getSubscriberId() <- called by " + lpparam.packageName);
+        }catch(XposedHelpers.ClassNotFoundError error){
+            XposedBridge.log("CLASS NOT FOUND -> android.telephony.TelephonyManager <- for getSubscriberId()");
+        }
+    }
+
+    //This method will hook android.telephony.TelephonyManager.getLine1Number()
+    //Returns the phone number string for line 1. Return null if it is unavailable.
+    //@GOOD
+    private void hookGetLine1Number(final LoadPackageParam lpparam){
+        try{
+            findAndHookMethod("android.telephony.TelephonyManager",
+                    lpparam.classLoader,
+                    "getLine1Number", new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+                            XposedBridge.log("Inside android.telephony.TelephonyManager.getLine1Number() <- called by " + lpparam.packageName);
+                            StringBuilder description = new StringBuilder( "Method name: android.telephony.TelephonyManager.getLine1Number");
+                            //If number exists ,log that or log 'No Line1Number'
+                            description.append( ", Line 1 Number : "+ ( (param.getResult()== null) ? "No Line1Number" : param.getResult()) );
+                            XposedBridge.log(description.toString());
+                            PIIObjectList.add(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.getLine1Number, description.toString()));
+                        }
+                    });
+        }catch (NoSuchMethodError e){
+            XposedBridge.log("METHOD NOT FOUND -> android.telephony.TelephonyManager.getLine1Number() <- called by " + lpparam.packageName);
+        }catch(XposedHelpers.ClassNotFoundError error){
+            XposedBridge.log("CLASS NOT FOUND -> android.telephony.TelephonyManager <- for getLine1Number()");
+        }
+    }
+
+    //This method will hook android.bluetooth.BluetoothAdapter.getAddress()
+    //Returns the hardware address of the local Bluetooth adapter.
+    //@GOOD
+    private void hookGetBluetoothAddress(final LoadPackageParam lpparam){
+        try{
+            findAndHookMethod("android.bluetooth.BluetoothAdapter",
+                    lpparam.classLoader,
+                    "getAddress", new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+
+                            XposedBridge.log("Inside android.bluetooth.BluetoothAdapter.getAddress() <- called by " + lpparam.packageName);
+                            StringBuilder description = new StringBuilder( "Method name: android.bluetooth.BluetoothAdapter.getAddress");
+                            description.append( ", Bluetooth Address : " + param.getResult() );
+                            XposedBridge.log(description.toString());
+                            PIIObjectList.add(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.getAddress, description.toString()));
+                        }
+                    });
+        }catch (NoSuchMethodError e){
+            XposedBridge.log("METHOD NOT FOUND -> android.bluetooth.BluetoothAdapter.getAddress() <- called by " + lpparam.packageName);
+        }catch(XposedHelpers.ClassNotFoundError error){
+            XposedBridge.log("CLASS NOT FOUND -> android.bluetooth.BluetoothAdapter <- for getAddress()");
+        }
+    }
+
+    //This method will hook android.bluetooth.BluetoothAdapter.getName()
+    //Get the friendly Bluetooth name of the local Bluetooth adapter.
+    //@GOOD
+    private void hookGetBluetoothName(final LoadPackageParam lpparam){
+        try{
+            findAndHookMethod("android.bluetooth.BluetoothAdapter",
+                    lpparam.classLoader,
+                    "getName", new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+                            XposedBridge.log("Inside android.bluetooth.BluetoothAdapter.getName() <- called by " + lpparam.packageName);
+                            StringBuilder description = new StringBuilder( "Method name: android.bluetooth.BluetoothAdapter.getName");
+                            description.append( ", Bluetooth Name: " + param.getResult() );
+                            XposedBridge.log(description.toString());
+                            PIIObjectList.add(new PIIJson(new Date(),lpparam.packageName, PIIJson.PIIAPIs.getName, description.toString()));
+                        }
+                    });
+        }catch (NoSuchMethodError e){
+            XposedBridge.log("METHOD NOT FOUND -> android.bluetooth.BluetoothAdapter.getName() <- called by " + lpparam.packageName);
+        }catch(XposedHelpers.ClassNotFoundError error){
+            XposedBridge.log("CLASS NOT FOUND -> android.bluetooth.BluetoothAdapter <- for getName()");
+        }
+    }
+
+    /**
      ************************************************
      ** methods blow are for testing purpose only. **
      ************************************************
-     * */
+     ** */
 
     //@TEST
     private void hookIsInvalid(final LoadPackageParam lpparam){
@@ -443,7 +866,7 @@ public class XposedClass implements IXposedHookLoadPackage {
                             XposedBridge.log("lpparm.classLoader is: " + lpparam.classLoader.toString());
                             Class<?> myClass = XposedHelpers.findClass("com.example.robel.testideavim.MainActivity", lpparam.classLoader);
 
-                            XposedBridge.log("myClass is:" + myClass.getName());
+                            XposedBridge.log("myClass is: " + myClass.getName());
                             int i = (int) XposedHelpers.findField(myClass,"count").get(param.thisObject);
                             XposedBridge.log("count is: "+ i);
                         }
